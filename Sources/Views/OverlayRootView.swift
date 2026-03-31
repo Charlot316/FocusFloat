@@ -28,7 +28,7 @@ struct OverlayRootView: View {
                 permissionSection
             }
         }
-        .padding(32) // 给四周留出足够的呼吸空间
+        .padding(20) // 显著缩小内边距
         .background(Color.clear) // 背景现在由外层 NSVisualEffectView 提供
         .colorScheme(.dark)
         .fixedSize(horizontal: false, vertical: true) // 这行非常重要，让 View 根据内容自动增长窗口
@@ -39,26 +39,26 @@ struct OverlayRootView: View {
 
     // MARK: - Active Task View
     private func activeTaskView(_ reminder: ReminderSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: 32) {
+        VStack(alignment: .leading, spacing: 20) { // 缩小各模块之间的间距
             // 1. 任务核心文本区域
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 10) {
                 Text(reminder.title)
-                    .font(.system(size: 38, weight: .bold, design: .rounded))
+                    .font(.system(size: 30, weight: .bold, design: .rounded)) // 缩小字号
                     .foregroundStyle(.white)
-                    .lineSpacing(4)
+                    .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
                 
                 if let notes = reminder.notes, !notes.isEmpty {
                     Text(notes)
-                        .font(.system(size: 20, weight: .medium))
+                        .font(.system(size: 16, weight: .medium)) // 缩小字号
                         .foregroundStyle(.white.opacity(0.8))
-                        .lineSpacing(4)
+                        .lineSpacing(2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
             
             // 2. 任务标签栏
-            HStack(spacing: 12) {
+            HStack(spacing: 8) {
                 labelTag(reminder.calendarTitle, icon: "list.bullet", color: .blue)
                 if let dueDate = reminder.dueDate {
                     labelTag(dueText(for: dueDate), icon: "clock.fill", color: .orange)
@@ -66,7 +66,7 @@ struct OverlayRootView: View {
                 Spacer()
             }
 
-            // 3. 完成任务大按钮
+            // 3. 完成任务按钮
             Button {
                 withAnimation(.spring(response: 0.3)) { completingReminderID = reminder.id }
                 Task {
@@ -74,27 +74,27 @@ struct OverlayRootView: View {
                     completingReminderID = nil
                 }
             } label: {
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     if completingReminderID == reminder.id {
                         ProgressView().controlSize(.small)
                     } else {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 20))
+                            .font(.system(size: 16))
                     }
-                    Text("COMPLETE THIS TASK").fontWeight(.black).tracking(1)
+                    Text("DONE").fontWeight(.black).tracking(0.5) // 文字更精简
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 68)
+                .frame(height: 52) // 缩小按钮高度
                 .background(.white)
                 .foregroundStyle(.black)
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
             }
             .buttonStyle(.plain)
 
             // 4. 底部功能小工具栏
-            HStack(spacing: 16) {
-                bottomUtilityButton(icon: "plus", label: "ADD TASK", color: .blue) {
+            HStack(spacing: 12) {
+                bottomUtilityButton(icon: "plus", label: "ADD", color: .blue) {
                     isShowingAddSheet = true
                 }
                 
@@ -109,27 +109,26 @@ struct OverlayRootView: View {
                     }
                 }
             }
-            .padding(.top, 8)
         }
     }
 
     private var emptyStateView: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 18) {
             Image(systemName: "sparkles")
-                .font(.system(size: 48))
+                .font(.system(size: 32))
                 .foregroundStyle(.white.opacity(0.3))
             
-            Text("ALL CLEAR")
-                .font(.system(size: 24, weight: .black))
+            Text("FOCUS ON NOW")
+                .font(.system(size: 16, weight: .black))
                 .foregroundStyle(.white.opacity(0.3))
-                .tracking(2)
+                .tracking(1.5)
             
-            bottomUtilityButton(icon: "plus", label: "NEW TASK", color: .blue) {
+            bottomUtilityButton(icon: "plus", label: "START NEW", color: .blue) {
                 isShowingAddSheet = true
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
+        .padding(.vertical, 20)
     }
 
     // MARK: - Quick Add Sheet
@@ -219,33 +218,33 @@ struct OverlayRootView: View {
 
     // MARK: - Styled Components
     private func labelTag(_ text: String, icon: String, color: Color) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: icon).font(.system(size: 12, weight: .bold))
-            Text(text).font(.system(size: 13, weight: .black))
+        HStack(spacing: 4) {
+            Image(systemName: icon).font(.system(size: 10, weight: .bold))
+            Text(text).font(.system(size: 11, weight: .black))
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(.white.opacity(0.1))
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(.white.opacity(0.08))
         .foregroundStyle(color)
         .clipShape(Capsule())
     }
 
     private func bottomUtilityButton(icon: String, label: String? = nil, color: Color = .white, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 8) {
+            HStack(spacing: 6) {
                 Image(systemName: icon)
-                    .font(.system(size: 16, weight: .black))
+                    .font(.system(size: 14, weight: .black))
                 if let label = label {
                     Text(label)
-                        .font(.system(size: 12, weight: .black))
+                        .font(.system(size: 11, weight: .black))
                 }
             }
-            .padding(.horizontal, label == nil ? 12 : 18)
-            .frame(height: 44)
-            .background(.white.opacity(0.1))
+            .padding(.horizontal, label == nil ? 10 : 14)
+            .frame(height: 38)
+            .background(.white.opacity(0.08))
             .foregroundStyle(color)
             .clipShape(Capsule())
-            .overlay(Capsule().stroke(.white.opacity(0.1), lineWidth: 1))
+            .overlay(Capsule().stroke(.white.opacity(0.08), lineWidth: 1))
         }
         .buttonStyle(.plain)
     }

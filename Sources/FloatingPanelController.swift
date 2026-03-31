@@ -10,7 +10,7 @@ private final class OverlayPanel: NSPanel {
 final class FloatingPanelController: NSWindowController {
     init(rootView: some View) {
         let panel = OverlayPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 480, height: 200), // 初始大小设小，由内容撑开
+            contentRect: NSRect(x: 0, y: 0, width: 420, height: 160), // 更窄的初始尺寸
             styleMask: [.nonactivatingPanel, .fullSizeContentView],
             backing: .buffered,
             defer: false
@@ -30,16 +30,15 @@ final class FloatingPanelController: NSWindowController {
         panel.standardWindowButton(.miniaturizeButton)?.isHidden = true
         panel.standardWindowButton(.zoomButton)?.isHidden = true
         
-        // 允许窗口根据 SwiftUI 内容自适应大小
-        panel.setFrameAutosaveName("FocusFloatPanel_v2")
+        panel.setFrameAutosaveName("FocusFloatPanel_v3")
 
-        // 使用原生 Visual Effect View 提供液态玻璃效果
+        // 升级为极致通透的液态玻璃材质
         let visualEffect = NSVisualEffectView()
         visualEffect.blendingMode = .behindWindow
         visualEffect.state = .active
-        visualEffect.material = .hudWindow // 深色、通透且具有系统级液态玻璃感
+        visualEffect.material = .fullScreenUI // AppKit 中最接近 ultraThinMaterial 的极致通透材质
         visualEffect.wantsLayer = true
-        visualEffect.layer?.cornerRadius = 32 // 与 SwiftUI 中的圆角对应
+        visualEffect.layer?.cornerRadius = 24 // 缩小圆角，视觉更紧致
         
         let hostingView = NSHostingView(rootView: rootView)
         hostingView.translatesAutoresizingMaskIntoConstraints = false
