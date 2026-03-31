@@ -40,14 +40,15 @@ struct OverlayRootView: View {
     // MARK: - Active Task View
     private func activeTaskView(_ reminder: ReminderSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 20) { // 缩小各模块之间的间距
-            // 1. 任务核心文本区域
+            focusTimerSection(for: reminder)
+
             VStack(alignment: .leading, spacing: 10) {
                 Text(reminder.title)
                     .font(.system(size: 30, weight: .bold, design: .rounded)) // 缩小字号
                     .foregroundStyle(.white)
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
-                
+
                 if let notes = reminder.notes, !notes.isEmpty {
                     Text(notes)
                         .font(.system(size: 16, weight: .medium)) // 缩小字号
@@ -56,12 +57,11 @@ struct OverlayRootView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            
-            // 2. 任务标签栏
+
             HStack(spacing: 8) {
                 labelTag(reminder.calendarTitle, icon: "list.bullet", color: .blue)
                 if let dueDate = reminder.dueDate {
-                    labelTag(dueText(for: dueDate), icon: "clock.fill", color: .orange)
+                    labelTag(endTimeText(for: dueDate), icon: "clock.fill", color: .orange)
                 }
                 Spacer()
             }
@@ -108,6 +108,50 @@ struct OverlayRootView: View {
                         NSApp.terminate(nil)
                     }
                 }
+            }
+        }
+    }
+
+    private func focusTimerSection(for reminder: ReminderSnapshot) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("FOCUS TIMER")
+                .font(.system(size: 12, weight: .black))
+                .foregroundStyle(.white.opacity(0.55))
+                .tracking(1.6)
+
+            if let dueDate = reminder.dueDate {
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    let countdown = countdownPresentation(to: dueDate, now: context.date)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(countdown.timeText)
+                            .font(.system(size: 64, weight: .black, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(countdown.accent)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+
+                        Text(countdown.statusText)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(.white.opacity(0.78))
+
+                        Capsule()
+                            .fill(countdown.accent.opacity(0.9))
+                            .frame(width: countdown.barWidth, height: 6)
+                            .animation(.easeInOut(duration: 0.25), value: countdown.barWidth)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(18)
+                    .background(countdown.background, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .stroke(.white.opacity(0.08), lineWidth: 1)
+                    )
+                }
+            } else {
+                Text("NO TIMER")
+                    .font(.system(size: 42, weight: .black, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.35))
             }
         }
     }
@@ -254,9 +298,66 @@ struct OverlayRootView: View {
         return formatter.localizedString(for: date, relativeTo: Date())
     }
 
+    private func endTimeText(for date: Date) -> String {
+        "截止 \(date.formatted(date: .omitted, time: .shortened))"
+    }
+
+    private func countdownPresentation(to dueDate: Date, now: Date) -> CountdownPresentation {
+        let secondsRemaining = Int(dueDate.timeIntervalSince(now).rounded(.down))
+        let seconds = abs(secondsRemaining)
+        let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
+        let remainingSeconds = seconds % 60
+
+        let timeText: String
+        if hours > 0 {
+            timeText = String(format: "%d:%02d:%02d", hours, minutes, remainingSeconds)
+        } else {
+            timeText = String(format: "%02d:%02d", minutes, remainingSeconds)
+        }
+
+        let accent: Color
+        let background: Color
+        let statusText: String
+        let barWidth: CGFloat
+
+        if secondsRemaining < 0 {
+            accent = .red
+            background = Color.red.opacity(0.16)
+            statusText = "已经超时，先把这个块收掉。"
+            barWidth = 220
+        } else if secondsRemaining <= 5 * 60 {
+            accent = .orange
+            background = Color.orange.opacity(0.14)
+            statusText = "最后冲刺，专注到 \(endTimeText(for: dueDate))。"
+            barWidth = 180
+        } else {
+            accent = .green
+            background = Color.green.opacity(0.14)
+            statusText = "只盯这一件事，先做到 \(endTimeText(for: dueDate))。"
+            barWidth = 120
+        }
+
+        return CountdownPresentation(
+            timeText: timeText,
+            statusText: statusText,
+            accent: accent,
+            background: background,
+            barWidth: barWidth
+        )
+    }
+
     private var selectedCalendarBinding: Binding<String> {
         Binding(get: { store.selectedCalendarIdentifier }, set: { store.selectedCalendarIdentifier = $0 })
     }
+}
+
+private struct CountdownPresentation {
+    let timeText: String
+    let statusText: String
+    let accent: Color
+    let background: Color
+    let barWidth: CGFloat
 }
 
 // 移除了 LiquidBackground，因为现在使用外层的 NSVisualEffectView
